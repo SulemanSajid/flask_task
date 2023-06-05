@@ -1,4 +1,4 @@
-from flask import Flask,render_template, request
+from flask import jsonify,Flask,render_template, request
 from flask_mysqldb import MySQL
  
 app = Flask(__name__)
@@ -13,6 +13,10 @@ mysql = MySQL(app)
 @app.route('/')
 def form():
     return render_template('index.html')
+
+@app.route('/users')
+def users():
+    return render_template('users.html')
  
 @app.route('/login', methods = ['POST', 'GET'])
 def login():
@@ -20,12 +24,18 @@ def login():
         return "Login via the login Form"
      
     if request.method == 'POST':
-        name = request.form['name']
-        age = request.form['age']
+        email = request.form['email']
+        password = request.form['password']
         cursor = mysql.connection.cursor()
-        cursor.execute(''' INSERT INTO info_table VALUES(%s,%s)''',(name,age))
-        mysql.connection.commit()
+        cursor.execute("SELECT * FROM login_table WHERE email=%s AND password=%s",(email,password))
+        result = cursor.fetchone()
         cursor.close()
-        return f"Done!!"
+        if result:
+            # Credentials are correct
+            return jsonify({'valid': True})
+        else:
+            # Invalid credentials
+            return jsonify({'valid': False})
+        
  
 app.run(host='localhost', port=5000)
